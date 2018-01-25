@@ -5,17 +5,21 @@ ansiColor('xterm') {
 
     properties([
       parameters([
-        string(name: 'gitsha',
-          defaultValue: '',
-          description: 'Git Commit SHA to Build and Release (ex. 167d7fb86 or 167)'
+        string(name: 'ref',
+          defaultValue: 'HEAD',
+          description: 'Git Commit SHA or Branch to Build and Release (ex. 167d7fb86 or 167)'
         ),
         string(name: 'version',
           defaultValue: '',
-          description: 'Community Release Version (ex. v1.5.2)'
+          description: 'Release Version. If tag is specified, this version is used for the tag.'
         ),
-        booleanParam(name: 'latest',
-          defaultValue: false,
-          description: 'True if docker mesosphere/marathon:latest should be pushed'
+        string(name: 'targets',
+          defaultValue: 'docker-tag linux-packages jar-artifact s3-package',
+          description: 'Targets to build. Note, if building the latest Marathon version, consider including docker-latest, also.'
+        ),
+        booleanParam(name: 'runTests',
+                     description: 'Whether unit/integration and package tests should be run',
+                     defaultValue: true)
         )]
       )
     ])
@@ -34,7 +38,7 @@ ansiColor('xterm') {
             sh """echo "${PKG_SSH_HOST} ${PKG_SSH_HOSTKEY_TYPE} ${PKG_SSH_HOSTKEY}" | sudo -E tee -a sudo -E tee -a /etc/ssh/ssh_known_hosts"""
 
             withDockerRegistry([credentialsId: 'docker-hub-credentials']) {
-              sh """sudo -E ci/pipeline release $params.version $params.gitsha $params.latest"""
+              sh """sudo -E env MARATHON_VERSION=$params.version ci/pipeline release --run-tests=$param.runTests $params.targets"""
             }
           }
         }

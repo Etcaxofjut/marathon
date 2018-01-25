@@ -292,6 +292,11 @@ lazy val marathon = (project in file("."))
   .settings(formatSettings: _*)
   .settings(packagingSettings: _*)
   .settings(
+    version := {
+      sys.env.get("MARATHON_VERSION").filter(_ != "git").getOrElse(version.value)
+    },
+
+
     unmanagedResourceDirectories in Compile += file("docs/docs/rest-api"),
     libraryDependencies ++= Dependencies.marathon,
     sourceGenerators in Compile += (ramlGenerate in Compile).taskValue,
